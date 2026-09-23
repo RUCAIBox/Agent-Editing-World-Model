@@ -26,6 +26,7 @@ AweAgent's core capabilities:
 
 ## :newspaper: News
 
+
 - `[2026-08-09]` 🎉 Updated the **Terminus-2** scaffold with a Harbor-aligned JSON reproduction for [Terminal-Bench 2.0](https://github.com/laude-institute/terminal-bench-2).
 - `[2026-08-07]` 🎉 Added Terminal & [CalibForge](https://arxiv.org/abs/2608.06352) scaffolds support.
 - `[2026-08-06]` 🎉 Added a **programmatic multi-benchmark eval server** (`aweagent.server.evaluate`), a **task registry** (`aweagent.task` entry points), and **multi-rollout evaluation** (`num_rollouts` / `--num-rollouts`) with per-instance pass@k.
