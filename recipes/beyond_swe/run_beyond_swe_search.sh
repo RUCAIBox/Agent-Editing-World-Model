@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+# Run BeyondSWE benchmark in search mode with SearchSWE agent.
+#
+# Usage:
+#   bash recipes/beyond_swe/run_beyondswe_searchswe.sh --data-file /path/to/data.jsonl
+#   bash recipes/beyond_swe/run_beyondswe_searchswe.sh --data-file data.jsonl --model gpt-4o --dry-run
+#   bash recipes/beyond_swe/run_beyondswe_searchswe.sh --data-file data.jsonl --instance-ids inst_001 inst_002
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+CONFIG="${PROJECT_ROOT}/configs/tasks/beyondswe_searchswe.yaml"
+
+# ── Defaults ──────────────────────────────────────────────────────────
+DATA_FILE=""
+MODEL="${MODEL:-gpt-4o}"
+MAX_STEPS="${MAX_STEPS:-100}"
+MAX_CONCURRENT="${MAX_CONCURRENT:-50}"
+OUTPUT_DIR="${OUTPUT_DIR:-${PROJECT_ROOT}/results/beyondswe_searchswe}"
+INSTANCE_IDS=()
+DRY_RUN=false
+
+# ── Parse arguments ───────────────────────────────────────────────────
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Run BeyondSWE benchmark in search mode.
+
+Required:
+  --data-file PATH       Path to BeyondSWE JSONL data file
+
+Environment variables:
+  BEYONDSWE_TEST_SUITE_DIR   Directory containing doc2repo test suite zip files
+  SERPAPI_API_KEY             API key for SerpAPI search backend
+  JINA_API_KEY               API key for Jina reader backend (optional, higher rate limit)
+  SEARCH_BACKEND             Search backend name (default: auto-discover)
+  READER_BACKEND             Reader backend name (default: auto-discover)
+  WEB_FETCH_CONFIG_PATH      Path to LLM config YAML for web_fetch
+  WEB_FETCH_MODEL            LLM model for web_fetch (default: gpt-4o-mini)
+
+Options:
+  --model MODEL          LLM model name (default: gpt-4o, env: MODEL)
+  --max-steps N          Max agent steps per instance (default: 100, env: MAX_STEPS)
+  --max-concurrent N     Max concurrent instances (default: 50, env: MAX_CONCURRENT)
+  --output-dir DIR       Output directory (default: results/beyondswe_searchswe, env: OUTPUT_DIR)
+  --instance-ids ID ...  Run only specific instance IDs
+  --dry-run              List instances without running
+  -h, --help             Show this help message
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --data-file)
+            DATA_FILE="$2"
+            shift 2
+            ;;
+        --model)
+            MODEL="$2"
+            shift 2
+            ;;
+        --max-steps)
+            MAX_STEPS="$2"
+            shift 2
+            ;;
+        --max-concurrent)
+            MAX_CONCURRENT="$2"
+            shift 2
+            ;;
+        --output-dir)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
+        --instance-ids)
+            shift
+            while [[ $# -gt 0 && ! "$1" =~ ^-- ]]; do
+                INSTANCE_IDS+=("$1")
+                shift
+            done
+            ;;
+        --dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Error: Unknown argument: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# ── Default: fall back to the downloaded dataset ──────────────────────
+# (bash datasets/download.sh beyond_swe)
+DATA_FILE="${DATA_FILE:-${PROJECT_ROOT}/datasets/beyond_swe/beyond_swe.jsonl}"
+
+# ── Validate ──────────────────────────────────────────────────────────
+if [[ ! -f "${DATA_FILE}" ]]; then
+    echo "Error: Data file not found: ${DATA_FILE}" >&2
+    echo "Run:   bash datasets/download.sh beyond_swe" >&2
+    exit 1
+fi
+
+if [[ -z "${OPENAI_API_KEY:-}" ]]; then
+    echo "Error: OPENAI_API_KEY environment variable is not set." >&2
+    exit 1
+fi
+
+if [[ ! -f "${CONFIG}" ]]; then
+    echo "Error: Config file not found: ${CONFIG}" >&2
+    exit 1
+fi
+
+# ── Build command ─────────────────────────────────────────────────────
+CMD=(
+    awe-agent run
+    -c "${CONFIG}"
+    -o "${OUTPUT_DIR}"
+    --max-steps "${MAX_STEPS}"
+    --max-concurrent "${MAX_CONCURRENT}"
+)
+
+if [[ "${DRY_RUN}" == true ]]; then
+    CMD+=(--dry-run)
+fi
+
+if [[ ${#INSTANCE_IDS[@]} -gt 0 ]]; then
+    CMD+=(--instance-ids "${INSTANCE_IDS[@]}")
+fi
+
+# ── Export env vars for config resolution ─────────────────────────────
+export DATA_FILE
+export AWE_AGENT__LLM__MODEL="${MODEL}"
+# test_suite_dir: pass through if set (needed for doc2repo evaluation)
+export BEYONDSWE_TEST_SUITE_DIR="${BEYONDSWE_TEST_SUITE_DIR:-}"
+# Search & web_fetch: pass through if set
+export SERPAPI_API_KEY="${SERPAPI_API_KEY:-}"
+export JINA_API_KEY="${JINA_API_KEY:-}"
+export SEARCH_BACKEND="${SEARCH_BACKEND:-}"
+export READER_BACKEND="${READER_BACKEND:-}"
+export WEB_FETCH_CONFIG_PATH="${WEB_FETCH_CONFIG_PATH:-}"
+export WEB_FETCH_MODEL="${WEB_FETCH_MODEL:-}"
+
+# ── Run ───────────────────────────────────────────────────────────────
+echo "=== BeyondSWE Search Mode ==="
+echo "Config:         ${CONFIG}"
+echo "Data file:      ${DATA_FILE}"
+echo "Model:          ${MODEL}"
+echo "Max steps:      ${MAX_STEPS}"
+echo "Max concurrent: ${MAX_CONCURRENT}"
+echo "Output dir:     ${OUTPUT_DIR}"
+if [[ -n "${BEYONDSWE_TEST_SUITE_DIR}" ]]; then
+    echo "Test suite dir: ${BEYONDSWE_TEST_SUITE_DIR}"
+fi
+if [[ ${#INSTANCE_IDS[@]} -gt 0 ]]; then
+    echo "Instance IDs:   ${INSTANCE_IDS[*]}"
+fi
+if [[ "${DRY_RUN}" == true ]]; then
+    echo "Mode:           DRY RUN"
+fi
+echo "=============================="
+
+exec "${CMD[@]}"

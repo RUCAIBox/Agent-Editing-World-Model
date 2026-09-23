@@ -1,0 +1,37 @@
+# Terminal Bench V2 Configuration
+# Usage:
+#   python recipes/terminal_bench_v2/run.py -c configs/tasks/terminal_bench_v2.yaml \
+#       --task-data-dir data/terminal-bench-2 --data-file data/instance_ids.json
+
+llm: "!include ../llm/openai.yaml"
+
+runtime:
+  backend: docker
+  timeout: 14400
+  resource_limits:
+    cpu: "4"
+    memory: "8Gi"
+
+agent:
+  type: calibforge
+  max_steps: 500
+
+task:
+  type: terminal_bench_v2
+  dataset_id: terminal_bench_v2
+  # Defaults to the downloaded checkout (bash datasets/download.sh terminal_bench_v2).
+  task_data_dir: ${TASK_DATA_DIR:-datasets/terminal_bench_v2/tasks}
+  # JSON array of instance ids to run; the downloader writes the full list.
+  # Edit instance_ids.json (or point DATA_FILE elsewhere) to run a subset.
+  data_file: ${DATA_FILE:-datasets/terminal_bench_v2/instance_ids.json}
+  override_agent_timeout: 3600
+
+eval:
+  enabled: true
+  timeout: 3600
+  # verifier_timeout: 1200
+
+execution:
+  max_concurrent: 50
+  max_retries: 3
+  output_path: ./results/terminal_bench_v2

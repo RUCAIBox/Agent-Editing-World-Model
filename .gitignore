@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv*/
+venv/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Results / output
+results/
+output/
+outputs/
+logs/
+.cache/
+checkpoints/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.tar.gz
+*.jsonl
+*.jsonl.gz
+*.parquet
+/benchmarks/action_judge/data/
+
+# Benchmark data downloaded by datasets/<task>/download.sh
+# (the download scripts + README are tracked; the data payloads are not)
+/datasets/**/*.csv
+/datasets/**/*.json
+/datasets/**/*.parquet
+/datasets/terminal_bench_v2/terminal-bench-2/
+/datasets/terminal_bench_v2/tasks
+/datasets/beyond_swe/BeyondSWE/
+/datasets/nl2repo/AweAgent-Meta-NL2Repo/
+/datasets/swe_bench_pro/AweAgent-Meta-SWE-Bench-Pro/
+
+# Logs
+*.log
+
+# Secrets / certificates
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Linter cache
+.ruff_cache/
+
+# Environment
+.env
+.env.*
+!.env.example
+.netrc
+.pypirc
+credentials.json
+credentials*.json
+sandbox.json

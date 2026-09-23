@@ -1,0 +1,134 @@
+[project]
+name = "awe-agent"
+version = "0.1.1"
+description = "A unified, composable framework to build, evaluate, and train agents"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0,<3.0",
+    "openai>=1.66.0,<3.0.0",
+    "aiohttp>=3.9",
+    "pyyaml>=6.0",
+    "tenacity>=8.2,<10",
+    "tiktoken>=0.7.0",
+    "structlog>=24.0",
+    "docker>=7.0",
+    "anthropic>=0.30.0",           # Anthropic (Claude) LLM backend
+    "sandbox_fusion",              # IterResearch PythonInterpreter tool (SandboxFusion client)
+    "json5",                       # lenient parsing of string-encoded tool args
+    "jsonschema>=4.18,<5",          # validate WM actions before execution
+    "huggingface_hub",             # benchmark dataset downloads (BeyondSWE / ScaleSWE)
+    "pandas",                      # BrowseComp parquet loading
+    "pyarrow",                     # BrowseComp parquet loading
+]
+
+[project.optional-dependencies]
+editact = ["transformers==5.12.1"]
+# Volcengine Ark LLM backend — heavy / region-specific SDK, kept optional.
+ark = ["volcengine-python-sdk[ark]"]
+terminus2 = [
+    "litellm==1.86.2",
+    "transformers==5.12.1",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    # Required by the Terminus 2 tests; runtime users can install [terminus2].
+    "litellm==1.86.2",
+    "transformers==5.12.1",
+]
+
+[project.scripts]
+awe-agent = "aweagent.cli:main"
+
+[project.entry-points."aweagent.llm_backend"]
+openai = "aweagent.core.llm.backends.openai:OpenAIBackend"
+azure = "aweagent.core.llm.backends.openai:OpenAIBackend"
+ark = "aweagent.core.llm.backends.ark:ArkBackend"
+sglang = "aweagent.core.llm.backends.sglang:SGLangBackend"
+anthropic = "aweagent.core.llm.backends.anthropic:AnthropicBackend"
+openai_response = "aweagent.core.llm.backends.openai_response:OpenAIResponseBackend"
+
+[project.entry-points."aweagent.runtime"]
+docker = "aweagent.core.runtime.docker:DockerRuntime"
+
+[project.entry-points."aweagent.agent"]
+search_swe = "aweagent.scaffold.search_swe.agent:SearchSWEAgent"
+deepsearch = "aweagent.scaffold.deepsearch.agent:DeepSearchAgent"
+terminus_2 = "aweagent.scaffold.terminus_2.agent:Terminus2Agent"
+iter_research = "aweagent.scaffold.iter_research.agent:IterResearchAgent"
+calibforge = "aweagent.scaffold.calibforge.agent:CalibForgeAgent"
+editact_for_search = "aweagent.scaffold.editact_for_search.agent:EditActSearchAgent"
+editact_terminal = "aweagent.scaffold.editact_terminal.agent:EditActTerminalAgent"
+editact_for_swe = "aweagent.scaffold.editact_for_swe.agent:EditActSWEAgent"
+
+[project.entry-points."aweagent.evaluator"]
+beyond_swe = "aweagent.tasks.beyond_swe.evaluator:BeyondSWEEvaluator"
+terminal_bench_v2 = "aweagent.tasks.terminal_bench_v2.evaluator:TerminalBenchV2Evaluator"
+browsecomp = "aweagent.tasks.browsecomp.evaluator:BrowseCompEvaluator"
+
+[project.entry-points."aweagent.search_backend"]
+serpapi = "aweagent.core.tool.search.backends.search.serpapi:SerpAPIBackend"
+
+[project.entry-points."aweagent.reader_backend"]
+jina = "aweagent.core.tool.search.backends.reader.jina:JinaReaderBackend"
+
+[project.entry-points."aweagent.tool"]
+execute_bash = "aweagent.core.tool.code.bash:ExecuteBashTool"
+str_replace_editor = "aweagent.core.tool.code.editor:StrReplaceEditorTool"
+think = "aweagent.core.tool.code.think:ThinkTool"
+finish = "aweagent.core.tool.code.finish:FinishTool"
+web_search = "aweagent.core.tool.search:WebSearchTool"
+web_fetch = "aweagent.core.tool.search:WebFetchTool"
+web_fetch_raw = "aweagent.core.tool.search:WebFetchRawTool"
+python_interpreter = "aweagent.core.tool.public.python_interpreter:PythonInterpreterTool"
+
+[project.entry-points."aweagent.task"]
+beyond_swe = "aweagent.tasks.beyond_swe.task:BeyondSWETask"
+scale_swe = "aweagent.tasks.scale_swe.task:ScaleSWETask"
+swe_bench_pro = "aweagent.tasks.swe_bench_pro.task:SWEBenchProTask"
+terminal_bench_v2 = "aweagent.tasks.terminal_bench_v2.task:TerminalBenchV2Task"
+nl2repo = "aweagent.tasks.nl2repo.task:NL2RepoTask"
+browsecomp = "aweagent.tasks.browsecomp.task:BrowseCompTask"
+denovo_swe = "aweagent.tasks.denovo_swe.task:DeNovoSWETask"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["aweagent"]
+
+[tool.hatch.build]
+exclude = [
+    "/.git", "/.venv*", "/venv", "**/__pycache__", "**/*.pyc",
+    "/.pytest_cache", "/.ruff_cache", "/.mypy_cache", "/.cache",
+    "/.env", "/.env.*", "!/.env.example", "/.mailmap",
+    "/results", "/output", "/outputs", "/logs", "/checkpoints",
+    "/benchmarks/action_judge/data", "**/*.jsonl", "**/*.jsonl.gz",
+    "**/*.parquet", "**/*.safetensors", "**/*.log", "**/*.pem", "**/*.key",
+    "**/credentials*.json", "**/sandbox.json", "/.netrc", "/.pypirc",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Prompt modules hold verbatim, model-facing text that must not be reflowed.
+"aweagent/scaffold/*/prompts.py" = ["E501"]
+"aweagent/scaffold/*/prompts/*.py" = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true

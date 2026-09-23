@@ -1,0 +1,9 @@
+# OpenAI LLM configuration
+backend: openai
+base_url: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+api_key: ${OPENAI_API_KEY}
+model: ${OPENAI_MODEL:-gpt-5.4}
+params:
+  # temperature: 1.0
+  max_completion_tokens: 32768
+thinking: false

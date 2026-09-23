@@ -1,0 +1,71 @@
+llm:
+  backend: openai
+  model: ${ACTOR_MODEL}
+  base_url: ${ACTOR_BASE_URL}
+  api_key: ${ACTOR_API_KEY}
+  thinking: true
+  reasoning:
+    preserve: true
+    format: reasoning_content
+  timeout: 1200
+  params:
+    temperature: 1.0
+    top_p: 0.95
+    presence_penalty: 1.5
+    max_tokens: 32768
+    extra_body:
+      top_k: 20
+      min_p: 0.0
+      repetition_penalty: 1.0
+      enable_thinking: true
+
+runtime:
+  backend: docker
+  image: ${SANDBOX_IMAGE:-python:3.11-slim}
+  workdir: /workspace
+  timeout: 14400
+  docker:
+    socket: ${DOCKER_HOST:-unix:///var/run/docker.sock}
+
+agent:
+  type: editact_terminal
+  tool_call_format: openai_function
+  max_steps: 10000
+  max_context_length: null
+  bash_timeout: 1800
+  bash_max_timeout: 3600
+  tool_options:
+    editact:
+      world_model: &wm
+        backend: openai
+        model: ${WM_MODEL}
+        base_url: ${WM_BASE_URL}
+        api_key: ${WM_API_KEY:-EMPTY}
+        reasoning:
+          preserve: true
+          format: reasoning_content
+        timeout: 1200
+        params:
+          temperature: 1.0
+          max_tokens: 32768
+      judge:
+        <<: *wm
+        params:
+          temperature: 1.0
+          max_tokens: 8192
+      revision_attempts: 3
+
+task:
+  type: terminal_bench_v2
+  dataset_id: terminal_bench_v2
+  task_data_dir: ${TASK_DATA_DIR:-datasets/terminal_bench_v2/tasks}
+  data_file: ${DATA_FILE:-datasets/terminal_bench_v2/instance_ids.json}
+  override_agent_timeout: 10800
+eval:
+  enabled: true
+  timeout: 3600
+  verifier_timeout: 1200
+execution:
+  max_concurrent: 1
+  num_rollouts: 1
+  output_path: ./results/editact/terminal

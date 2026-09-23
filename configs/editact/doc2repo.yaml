@@ -1,0 +1,67 @@
+llm:
+  backend: openai
+  model: ${ACTOR_MODEL}
+  base_url: ${ACTOR_BASE_URL}
+  api_key: ${ACTOR_API_KEY}
+  thinking: true
+  reasoning:
+    preserve: true
+    format: reasoning_content
+  timeout: 1200
+  params:
+    temperature: 1.0
+    max_tokens: 32768
+    thinking:
+      type: enabled
+      budget_tokens: 10000
+
+runtime:
+  backend: docker
+  image: ${SANDBOX_IMAGE:-python:3.11-slim}
+  workdir: /workspace
+  timeout: 82800
+  docker:
+    socket: ${DOCKER_HOST:-unix:///var/run/docker.sock}
+
+agent:
+  type: editact_for_swe
+  tool_call_format: openai_function
+  max_steps: 400
+  max_context_length: 245760
+  bash_timeout: 3600
+  bash_max_timeout: 3600
+  enable_search: false
+  tool_options:
+    editact:
+      world_model: &wm
+        backend: openai
+        model: ${WM_MODEL}
+        base_url: ${WM_BASE_URL}
+        api_key: ${WM_API_KEY:-EMPTY}
+        reasoning:
+          preserve: true
+          format: reasoning_content
+        timeout: 1200
+        params:
+          temperature: 1.0
+          max_tokens: 32768
+          tool_choice: required
+      judge:
+        <<: *wm
+        params:
+          temperature: 1.0
+          max_tokens: 8192
+      revision_attempts: 3
+
+task:
+  type: beyond_swe
+  dataset_id: beyond_swe
+  task_type: doc2repo
+  data_file: ${DATA_FILE:-datasets/beyond_swe/beyond_swe.jsonl}
+eval:
+  enabled: true
+  timeout: 7200
+execution:
+  max_concurrent: 1
+  num_rollouts: 1
+  output_path: ./results/editact/doc2repo

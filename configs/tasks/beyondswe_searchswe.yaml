@@ -1,0 +1,40 @@
+# BeyondSWE Search Mode Configuration
+# Usage:
+#   awe-agent run -c configs/tasks/beyondswe_searchswe.yaml
+#   python recipes/beyond_swe/run.py -c configs/tasks/beyondswe_searchswe.yaml --data-file ...
+
+llm: "!include ${LLM_CONFIG:-../llm/openai.yaml}"
+
+runtime:
+  backend: docker
+  timeout: 14400
+  resource_limits:
+    cpu: "4"
+    memory: "8Gi"
+
+agent:
+  type: search_swe
+  max_steps: 200
+  # max_context_length: 128000  # Max input tokens per LLM call; null = no limit
+  enable_search: true
+  bash_timeout: 1200
+
+task:
+  type: beyond_swe
+  dataset_id: beyond_swe
+  # Defaults to the downloaded set (bash datasets/download.sh beyond_swe).
+  data_file: ${DATA_FILE:-datasets/beyond_swe/beyond_swe.jsonl}
+  # test_suite_dir: /path/to/doc2repo_test_suite  # or set BEYONDSWE_TEST_SUITE_DIR env var
+
+eval:
+  enabled: true
+  timeout: 3600
+
+execution:
+  max_concurrent: 50
+  max_retries: 3
+  output_path: ./results/beyondswe_searchswe
+
+# security:
+#   bash_blocklist: []          # extra patterns (code defaults handle the rest)
+#   blocked_search_patterns:    # per-instance patterns are added by the task

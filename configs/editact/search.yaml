@@ -1,0 +1,88 @@
+llm:
+  backend: openai
+  model: ${ACTOR_MODEL}
+  base_url: ${ACTOR_BASE_URL}
+  api_key: ${ACTOR_API_KEY}
+  thinking: true
+  reasoning:
+    preserve: true
+    format: reasoning_content
+  timeout: 1200
+  params:
+    temperature: 1.0
+    top_p: 0.95
+    presence_penalty: 1.5
+    max_tokens: 65500
+    extra_body:
+      top_k: 20
+      min_p: 0.0
+      repetition_penalty: 1.0
+      enable_thinking: true
+
+agent:
+  type: editact_for_search
+  tool_call_format: openai_function
+  max_steps: 600
+  max_context_length: 250000
+  rollout_retries: 0
+  force_final_answer: true
+  tools: [web_search, web_fetch, finish]
+  tool_options:
+    web_search:
+      backend: serpapi
+      max_attempts: 3
+    web_fetch:
+      reader_backend: jina
+      max_attempts: 3
+      llm:
+        backend: openai
+        model: ${ACTOR_MODEL}
+        base_url: ${ACTOR_BASE_URL}
+        api_key: ${ACTOR_API_KEY}
+        params:
+          temperature: 0.0
+          max_tokens: 8192
+        timeout: 1200
+    editact:
+      world_model: &wm
+        backend: openai
+        model: ${WM_MODEL}
+        base_url: ${WM_BASE_URL}
+        api_key: ${WM_API_KEY:-EMPTY}
+        reasoning:
+          preserve: true
+          format: reasoning_content
+        timeout: 1200
+        params: &wm_params
+          temperature: 1.0
+          top_p: 0.95
+          presence_penalty: 1.5
+          max_tokens: 10240
+          extra_body:
+            top_k: 20
+            min_p: 0.0
+            repetition_penalty: 1.0
+            enable_thinking: true
+      judge:
+        <<: *wm
+        params:
+          <<: *wm_params
+          max_tokens: 1024
+      allow_parallel_revision: false
+      tokenizer_path: ${TOKENIZER_PATH:-Qwen/Qwen3.5-35B-A3B}
+      max_context_tokens: 250000
+      max_output_tokens_cap: 65500
+      force_final_answer_remaining_tokens: 8192
+      tool_context_max_tokens: 32000
+      tool_context_target_tokens: 5000
+
+task:
+  type: browsecomp
+  dataset_id: browsecomp
+  data_file: ${BROWSECOMP_DATA_FILE:-datasets/browsecomp/browse_comp_test_set.csv}
+eval:
+  enabled: true
+execution:
+  max_concurrent: 1
+  num_rollouts: 1
+  output_path: ./results/editact/search
