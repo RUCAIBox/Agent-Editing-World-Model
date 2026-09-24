@@ -13,7 +13,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/Code_License-Apache_2.0-2C8C3C" alt="Apache 2.0 code license"></a>
 </p>
 
-<p align="center"><em>Paper link forthcoming.</em></p>
+
 
 > **AEWM models how an agent's decisions shape task progress, rather than predicting tool responses.** Its inference framework, **EditAct**, judges the proposed reasoning and action, edits noisy decisions, and executes the selected action in the real environment.
 
