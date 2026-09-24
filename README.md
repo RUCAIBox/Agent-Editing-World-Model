@@ -6,7 +6,7 @@
 
 <!-- TODO: replace ARXIV_ID with the paper identifier. -->
 <p align="center">
-  <a href="https://arxiv.org/abs/ARXIV_ID"><img src="https://img.shields.io/badge/Paper-arXiv-B31B1B?logo=arxiv&amp;logoColor=white" alt="Paper (link forthcoming)"></a>
+  <a href="https://arxiv.org/pdf/2609.28416"><img src="https://img.shields.io/badge/Paper-arXiv-B31B1B?logo=arxiv&amp;logoColor=white" alt="Paper (link forthcoming)"></a>
   <a href="https://huggingface.co/RUC-AIBOX/AEWM"><img src="https://img.shields.io/badge/🤗_Hugging_Face-Model-FFD21E" alt="AEWM model"></a>
   <a href="https://huggingface.co/datasets/RUC-AIBOX/AEWM-Action-Judge-Bench"><img src="https://img.shields.io/badge/🤗_Hugging_Face-Dataset-FFD21E" alt="Action Judge Benchmark"></a>
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&amp;logoColor=white" alt="Python 3.11 or newer">
